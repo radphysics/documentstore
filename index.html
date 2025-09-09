@@ -3,106 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Document</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>PDF Repository</title>
+    <script src="https://cdn.jsdelivr.net/npm/staticrypt@2.2.0/dist/staticrypt.min.js"></script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .pdf-list {
+            list-style: none;
+            padding: 0;
+        }
+        .pdf-list li {
+            margin: 10px 0;
+        }
+        .pdf-list a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        .pdf-list a:hover {
+            text-decoration: underline;
+        }
+        #password-prompt {
+            margin-bottom: 20px;
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex items-center justify-center p-4">
-
-    <div id="container" class="w-full max-w-md">
-        <div class="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-8">
-            <div id="loading-state">
-                <h1 class="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">Loading Document...</h1>
-                <p class="text-center text-gray-500 dark:text-gray-400">Please wait a moment.</p>
-            </div>
-
-            <div id="login-state" class="hidden">
-                 <h1 class="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">Protected Document</h1>
-                <p id="prompt-message" class="text-center text-gray-500 dark:text-gray-400 mb-6">Enter the password to view the file.</p>
-                <form id="login-form">
-                    <div class="mb-4">
-                        <label for="password-input" class="sr-only">Password</label>
-                        <input type="password" id="password-input" placeholder="Enter password" class="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border-2 border-transparent focus:border-blue-500 dark:focus:border-blue-500 rounded-lg text-gray-800 dark:text-gray-200 outline-none transition duration-300">
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-lg">
-                        Access File
-                    </button>
-                </form>
-                <p id="error-message" class="text-red-500 text-center mt-4 font-medium"></p>
-            </div>
-            
-            <div id="error-state" class="hidden">
-                <h1 class="text-2xl font-bold text-center mb-2 text-red-600 dark:text-red-500">Error</h1>
-                <p id="critical-error-message" class="text-center text-gray-500 dark:text-gray-400">Could not find the requested document.</p>
-            </div>
-        </div>
+<body>
+    <div id="password-prompt">
+        <h1>Enter Password</h1>
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="checkPassword()">Unlock</button>
+    </div>
+    <div id="content" style="display: none;">
+        <h1>PDF Repository</h1>
+        <p>Scan the QR code or access the files below:</p>
+        <img src="qr-code.png" alt="QR Code for this page" style="max-width: 200px;">
+        <h2>Available PDFs</h2>
+        <ul class="pdf-list" id="pdf-list">
+            <!-- PDF links will be dynamically added here -->
+        </ul>
     </div>
 
     <script>
-        // --- IMPORTANT: SET YOUR GENERAL PASSWORD HERE ---
-        const CORRECT_PASSWORD = "YourSecretPassword"; // <-- CHANGE THIS!
+        // Password protection (set your desired password here)
+        const correctPassword = "your_secure_password"; // Replace with your actual password
 
-        // --- DOM Elements ---
-        const loginForm = document.getElementById('login-form');
-        const passwordInput = document.getElementById('password-input');
-        const errorMessage = document.getElementById('error-message');
-        
-        const loadingState = document.getElementById('loading-state');
-        const loginState = document.getElementById('login-state');
-        const errorState = document.getElementById('error-state');
-        const criticalErrorMessage = document.getElementById('critical-error-message');
-        const promptMessage = document.getElementById('prompt-message');
-
-        // --- Main Logic ---
-        window.onload = function() {
-            // Get the PDF file name from the URL (e.g., ?pdf=report.pdf)
-            const urlParams = new URLSearchParams(window.location.search);
-            const pdfFile = urlParams.get('pdf');
-
-            if (!pdfFile) {
-                // If no PDF is specified in the URL, show an error.
-                loadingState.classList.add('hidden');
-                loginState.classList.add('hidden');
-                errorState.classList.remove('hidden');
-                criticalErrorMessage.textContent = "No document was specified in the link. Make sure the URL is correct.";
-                return;
-            }
-
-            // Check if user was already authenticated in this session
-            if (sessionStorage.getItem('isAuthenticated') === 'true') {
-                // If they are, redirect them to the PDF immediately.
-                window.location.href = pdfFile;
+        function checkPassword() {
+            const input = document.getElementById("password").value;
+            if (input === correctPassword) {
+                document.getElementById("password-prompt").style.display = "none";
+                document.getElementById("content").style.display = "block";
+                loadPDFs();
             } else {
-                // Otherwise, show the password prompt.
-                loadingState.classList.add('hidden');
-                loginState.classList.remove('hidden');
-                promptMessage.textContent = `Enter the password to view ${pdfFile}.`
+                alert("Incorrect password. Please try again.");
             }
-        };
+        }
 
-        loginForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            
-            const enteredPassword = passwordInput.value;
-            const urlParams = new URLSearchParams(window.location.search);
-            const pdfFile = urlParams.get('pdf');
+        // Dynamically load PDF files from the repository
+        const pdfFiles = [
+            // Add your PDF files here (relative paths in your GitHub repo)
+            "pdfs/sample1.pdf",
+            "pdfs/sample2.pdf"
+        ];
 
-            if (enteredPassword === CORRECT_PASSWORD) {
-                // On correct password, save auth state and redirect to the PDF.
-                sessionStorage.setItem('isAuthenticated', 'true');
-                window.location.href = pdfFile;
-            } else {
-                errorMessage.textContent = 'Incorrect password. Please try again.';
-                passwordInput.value = '';
-                passwordInput.focus();
-            }
-        });
+        function loadPDFs() {
+            const pdfList = document.getElementById("pdf-list");
+            pdfFiles.forEach(file => {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = file;
+                a.textContent = file.split("/").pop();
+                a.target = "_blank";
+                li.appendChild(a);
+                pdfList.appendChild(li);
+            });
+        }
     </script>
-
 </body>
 </html>
